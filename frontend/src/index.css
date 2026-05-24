@@ -1,24 +1,31 @@
 :root {
-  --primary: #1E3A5F;
+  --primary: #162032;
   --secondary: #4ADE80;
-  --tertiary: #503300;
-  --neutral: #0F172A;
-  
-  /* Additional colors inferred from design */
-  --bg-card: #1E293B; /* Slightly lighter than neutral for cards */
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
+  --secondary-hover: #22C55E;
+  --neutral: #0D1520;
+  --bg-card: #1A2740;
+  --bg-card-hover: #1e2e4a;
+  --text-main: #F0F6FF;
+  --text-muted: #8899AA;
   --expense-red: #EF4444;
-  --border-color: rgba(255, 255, 255, 0.1);
-
-  --font-main: 'Geist', sans-serif;
+  --income-green: #4ADE80;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(74, 222, 128, 0.3);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --font-main: 'Geist', 'Inter', sans-serif;
   --font-secondary: 'Inter', sans-serif;
+  --navbar-height: 64px;
 }
 
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -26,10 +33,13 @@ body {
   background-color: var(--neutral);
   color: var(--text-main);
   min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-main);
+  line-height: 1.2;
 }
 
 a {
@@ -42,4 +52,12 @@ button {
   font-family: var(--font-secondary);
   border: none;
   outline: none;
+}
+
+input, select, textarea {
+  font-family: var(--font-secondary);
+}
+
+img {
+  max-width: 100%;
 }
