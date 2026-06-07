@@ -1,83 +1,156 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
-
-/* ---- mock data ---- */
-const ALL_TRANSACTIONS = [
-  { id: 1, tanggal: 'Oct 24, 2024', catatan: 'Grocery Run - Superindo', kategori: 'Food', akun: 'BCA Utama', jumlah: -450000 },
-  { id: 2, tanggal: 'Oct 22, 2024', catatan: 'Freelance Web Design', kategori: 'Income', akun: 'Mandiri Bisnis', jumlah: 3500000 },
-  { id: 3, tanggal: 'Oct 20, 2024', catatan: 'Netflix Subscription', kategori: 'Entertainment', akun: 'Credit Card', jumlah: -186000 },
-  { id: 4, tanggal: 'Oct 18, 2024', catatan: 'Pertamina Gas', kategori: 'Transport', akun: 'BCA Utama', jumlah: -300000 },
-  { id: 5, tanggal: 'Oct 15, 2024', catatan: 'Monthly Salary', kategori: 'Income', akun: 'BCA Utama', jumlah: 12000000 },
-  { id: 6, tanggal: 'Oct 12, 2024', catatan: 'Indomaret', kategori: 'Food', akun: 'GoPay', jumlah: -87500 },
-  { id: 7, tanggal: 'Oct 10, 2024', catatan: 'Spotify Premium', kategori: 'Entertainment', akun: 'Credit Card', jumlah: -54990 },
-];
+import { getTransaksi, createTransaksi, updateTransaksi, deleteTransaksi } from '../api/api';
+import { getKategori } from '../api/api';
+import { getAkun } from '../api/api';
 
 const ITEMS_PER_PAGE = 5;
 
 const fmt = (n) => 'Rp ' + Math.abs(n).toLocaleString('id-ID');
 
-const getCategoryBadge = (kat) => {
-  const map = {
-    Income: 'badge-green',
-    Food: 'badge-red',
-    Entertainment: 'badge-blue',
-    Transport: 'badge-gray',
-    Groceries: 'badge-orange',
-  };
-  return map[kat] || 'badge-gray';
+const getCategoryBadge = (jenis) => {
+  if (jenis === 'pemasukan') return 'badge-green';
+  return 'badge-red';
 };
 
-const CATEGORIES = ['Food', 'Income', 'Entertainment', 'Transport', 'Groceries', 'Shopping', 'Health'];
-const ACCOUNTS = ['BCA Utama', 'Mandiri Bisnis', 'Credit Card', 'GoPay', 'OVO'];
-
 const TransaksiPage = () => {
-  const [transactions, setTransactions] = useState(ALL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
   /* Add modal */
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ jumlah: '', kategori: '', akun: '', tanggal: '', catatan: '' });
+  const [form, setForm] = useState({ jumlah: '', kategori_id: '', akun_id: '', tanggal: '', catatan: '' });
+
+  /* Edit modal */
+  const [showEdit, setShowEdit] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
 
   /* Delete modal */
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const filtered = transactions.filter(
-    (t) =>
-      t.catatan.toLowerCase().includes(search.toLowerCase()) ||
-      t.kategori.toLowerCase().includes(search.toLowerCase()) ||
-      t.akun.toLowerCase().includes(search.toLowerCase())
-  );
+  // Helper: get category/account name by ID
+  const getCategoryName = (id) => {
+    const cat = categories.find(c => c.id === id);
+    return cat ? cat.name : '-';
+  };
+  const getCategoryJenis = (id) => {
+    const cat = categories.find(c => c.id === id);
+    return cat ? cat.jenis : 'pengeluaran';
+  };
+  const getAccountName = (id) => {
+    const acc = accounts.find(a => a.id === id);
+    return acc ? acc.name : '-';
+  };
+
+  const fetchAll = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [trxData, katData, akunData] = await Promise.all([
+        getTransaksi(),
+        getKategori(),
+        getAkun(),
+      ]);
+      setTransactions(trxData);
+      setCategories(katData);
+      setAccounts(akunData);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal mengambil data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  // Searching
+  const filtered = transactions.filter((t) => {
+    const catName = getCategoryName(t.kategori_id).toLowerCase();
+    const accName = getAccountName(t.akun_id).toLowerCase();
+    const s = search.toLowerCase();
+    return (
+      (t.catatan || '').toLowerCase().includes(s) ||
+      catName.includes(s) ||
+      accName.includes(s)
+    );
+  });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   /* stats */
-  const totalIncome = transactions.filter((t) => t.jumlah > 0).reduce((s, t) => s + t.jumlah, 0);
-  const totalExpense = transactions.filter((t) => t.jumlah < 0).reduce((s, t) => s + t.jumlah, 0);
-  const balance = totalIncome + totalExpense;
+  const totalIncome = transactions.reduce((s, t) => {
+    const jenis = getCategoryJenis(t.kategori_id);
+    return jenis === 'pemasukan' ? s + t.jumlah : s;
+  }, 0);
+  const totalExpense = transactions.reduce((s, t) => {
+    const jenis = getCategoryJenis(t.kategori_id);
+    return jenis === 'pengeluaran' ? s + t.jumlah : s;
+  }, 0);
+  const balance = totalIncome - totalExpense;
 
-  const handleSave = () => {
-    if (!form.jumlah || !form.tanggal) return;
-    setTransactions([
-      {
-        id: Date.now(),
-        tanggal: new Date(form.tanggal).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        catatan: form.catatan || 'Transaction',
-        kategori: form.kategori || 'Other',
-        akun: form.akun || 'BCA Utama',
-        jumlah: Number(form.jumlah),
-      },
-      ...transactions,
-    ]);
-    setForm({ jumlah: '', kategori: '', akun: '', tanggal: '', catatan: '' });
-    setShowAdd(false);
-    setPage(1);
+  const resetForm = () => {
+    setForm({ jumlah: '', kategori_id: '', akun_id: '', tanggal: '', catatan: '' });
   };
 
-  const handleDelete = () => {
-    setTransactions(transactions.filter((t) => t.id !== deleteTarget.id));
-    setDeleteTarget(null);
+  const handleSave = async () => {
+    if (!form.jumlah || !form.tanggal || !form.akun_id || !form.kategori_id) {
+      alert('Field jumlah, tanggal, akun, dan kategori wajib diisi!');
+      return;
+    }
+    try {
+      const payload = {
+        akun_id: Number(form.akun_id),
+        kategori_id: Number(form.kategori_id),
+        jumlah: Math.abs(Number(form.jumlah)),
+        tanggal: form.tanggal,
+        catatan: form.catatan || '',
+      };
+
+      if (showEdit && editTarget) {
+        await updateTransaksi(editTarget.id, payload);
+        setShowEdit(false);
+      } else {
+        await createTransaksi(payload);
+        setShowAdd(false);
+      }
+      resetForm();
+      setEditTarget(null);
+      setPage(1);
+      await fetchAll();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal menyimpan transaksi');
+    }
+  };
+
+  const openEdit = (trx) => {
+    setEditTarget(trx);
+    setForm({
+      jumlah: trx.jumlah,
+      kategori_id: trx.kategori_id,
+      akun_id: trx.akun_id,
+      tanggal: trx.tanggal,
+      catatan: trx.catatan,
+    });
+    setShowEdit(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteTransaksi(deleteTarget.id);
+      setDeleteTarget(null);
+      await fetchAll();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal menghapus transaksi');
+      setDeleteTarget(null);
+    }
   };
 
   const pageNumbers = () => {
@@ -101,10 +174,17 @@ const TransaksiPage = () => {
         <div>
           <h1 className="page-title">Transactions</h1>
         </div>
-        <button className="btn btn-blue" id="add-transaction-btn" onClick={() => setShowAdd(true)}>
+        <button className="btn btn-blue" id="add-transaction-btn" onClick={() => { resetForm(); setShowAdd(true); }}>
           + Add Transaction
         </button>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div style={{ padding: '1rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '0.5rem', color: '#EF4444' }}>
+          {error}
+        </div>
+      )}
 
       {/* Summary cards */}
       <section className="summary-cards" style={{ marginBottom: '1.5rem' }}>
@@ -113,7 +193,7 @@ const TransaksiPage = () => {
           <div className="summary-card-value text-green">{fmt(totalIncome)}</div>
           <div className="summary-card-trend trend-up">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            +5% vs last month
+            Pemasukan
           </div>
         </div>
 
@@ -122,7 +202,7 @@ const TransaksiPage = () => {
           <div className="summary-card-value text-red">{fmt(totalExpense)}</div>
           <div className="summary-card-trend trend-down">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-            -2% vs last month
+            Pengeluaran
           </div>
         </div>
 
@@ -131,22 +211,14 @@ const TransaksiPage = () => {
           <div className="summary-card-value" style={{ color: '#60A5FA' }}>{fmt(balance)}</div>
           <div className="summary-card-trend" style={{ color: 'var(--text-muted)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Available funds
+            Selisih
           </div>
-        </div>
-
-        {/* Filter & Sort */}
-        <div className="card summary-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2">
-            <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
-          </svg>
-          <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>Filter &amp; Sort</div>
         </div>
       </section>
 
       {/* Table card */}
       <div className="card">
-        {/* Search + download */}
+        {/* Search */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
           <div className="search-bar" style={{ flex: 1, maxWidth: 360 }}>
             <svg className="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -159,11 +231,6 @@ const TransaksiPage = () => {
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
-          <button className="icon-btn" title="Download CSV" style={{ border: '1px solid var(--border-color)', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', color: 'var(--text-muted)' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </button>
         </div>
 
         {/* Table */}
@@ -175,45 +242,71 @@ const TransaksiPage = () => {
             <div>CATEGORY</div>
             <div>ACCOUNT</div>
             <div style={{ textAlign: 'right' }}>AMOUNT</div>
+            <div style={{ textAlign: 'center' }}>ACTION</div>
           </div>
 
           {/* Rows */}
-          {paginated.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No transactions found.</div>
+          {loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+          ) : paginated.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              {transactions.length === 0 ? 'Belum ada transaksi.' : 'No transactions found.'}
+            </div>
           ) : (
-            paginated.map((trx) => (
-              <div className="table-data-row transaksi-cols" key={trx.id} style={{ paddingLeft: '2rem' }}>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{trx.tanggal}</div>
-                <div style={{ fontWeight: 500 }}>{trx.catatan}</div>
-                <div>
-                  <span className={`badge ${getCategoryBadge(trx.kategori)}`}>{trx.kategori}</span>
+            paginated.map((trx) => {
+              const jenis = getCategoryJenis(trx.kategori_id);
+              const isIncome = jenis === 'pemasukan';
+              return (
+                <div className="table-data-row transaksi-cols" key={trx.id} style={{ paddingLeft: '2rem' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{trx.tanggal}</div>
+                  <div style={{ fontWeight: 500 }}>{trx.catatan || '-'}</div>
+                  <div>
+                    <span className={`badge ${getCategoryBadge(jenis)}`}>{getCategoryName(trx.kategori_id)}</span>
+                  </div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{getAccountName(trx.akun_id)}</div>
+                  <div style={{ textAlign: 'right', fontWeight: 700 }} className={isIncome ? 'text-green' : 'text-red'}>
+                    {isIncome ? '+ ' : '- '}{fmt(trx.jumlah)}
+                  </div>
+                  <div className="action-btn-group" style={{ justifyContent: 'center' }}>
+                    <button className="icon-btn" title="Edit" onClick={() => openEdit(trx)}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button className="icon-btn delete" title="Delete" onClick={() => setDeleteTarget(trx)}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{trx.akun}</div>
-                <div style={{ textAlign: 'right', fontWeight: 700 }} className={trx.jumlah > 0 ? 'text-green' : 'text-red'}>
-                  {trx.jumlah > 0 ? '+ ' : '- '}{fmt(trx.jumlah)}
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
         {/* Pagination */}
-        <div className="pagination-bar">
-          <span className="pagination-info">Showing {Math.min((page - 1) * ITEMS_PER_PAGE + 1, filtered.length)}–{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} entries</span>
-          <div className="pagination-controls">
-            <button className="page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
-            {pageNumbers().map((n, i) =>
-              n === '...'
-                ? <span key={`ellipsis-${i}`} className="page-ellipsis">...</span>
-                : <button key={n} className={`page-btn ${page === n ? 'page-btn-active' : ''}`} onClick={() => setPage(n)}>{n}</button>
-            )}
-            <button className="page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
+        {!loading && filtered.length > 0 && (
+          <div className="pagination-bar">
+            <span className="pagination-info">Showing {Math.min((page - 1) * ITEMS_PER_PAGE + 1, filtered.length)}–{Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} entries</span>
+            <div className="pagination-controls">
+              <button className="page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Prev</button>
+              {pageNumbers().map((n, i) =>
+                n === '...'
+                  ? <span key={`ellipsis-${i}`} className="page-ellipsis">...</span>
+                  : <button key={n} className={`page-btn ${page === n ? 'page-btn-active' : ''}`} onClick={() => setPage(n)}>{n}</button>
+              )}
+              <button className="page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Add Transaction Modal */}
-      <Modal isOpen={showAdd} onClose={() => setShowAdd(false)}>
+      {/* Add / Edit Transaction Modal */}
+      <Modal isOpen={showAdd || showEdit} onClose={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); resetForm(); }}>
         <div className="modal-header">
           <div className="modal-title">
             <span className="modal-title-icon">
@@ -221,14 +314,14 @@ const TransaksiPage = () => {
                 <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
               </svg>
             </span>
-            Add Transaction
+            {showEdit ? 'Edit Transaction' : 'Add Transaction'}
           </div>
-          <button className="modal-close" onClick={() => setShowAdd(false)}>✕</button>
+          <button className="modal-close" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); resetForm(); }}>✕</button>
         </div>
 
         <div className="modal-body">
           <div className="form-group">
-            <label className="form-label">Amount (RP)</label>
+            <label className="form-label">Amount (Rp)</label>
             <div className="form-control-prefix">
               <span className="form-prefix">Rp</span>
               <input
@@ -243,16 +336,16 @@ const TransaksiPage = () => {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Category</label>
-              <select className="form-control" value={form.kategori} onChange={(e) => setForm({ ...form, kategori: e.target.value })}>
+              <select className="form-control" value={form.kategori_id} onChange={(e) => setForm({ ...form, kategori_id: e.target.value })}>
                 <option value="">Select category</option>
-                {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.jenis})</option>)}
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Account</label>
-              <select className="form-control" value={form.akun} onChange={(e) => setForm({ ...form, akun: e.target.value })}>
+              <select className="form-control" value={form.akun_id} onChange={(e) => setForm({ ...form, akun_id: e.target.value })}>
                 <option value="">Select account</option>
-                {ACCOUNTS.map((a) => <option key={a}>{a}</option>)}
+                {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
           </div>
@@ -278,9 +371,9 @@ const TransaksiPage = () => {
         <div className="modal-footer">
           <button className="btn btn-primary" onClick={handleSave}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            Save Transaction
+            {showEdit ? 'Update Transaction' : 'Save Transaction'}
           </button>
-          <button className="btn btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
+          <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); resetForm(); }}>Cancel</button>
         </div>
       </Modal>
 

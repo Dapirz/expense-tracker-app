@@ -1,12 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
-
-const initialAccounts = [
-  { id: 1, name: 'BCA Primary', type: 'Checking', institution: 'Bank Central Asia', balance: 12500000 },
-  { id: 2, name: 'Mandiri Savings', type: 'Savings', institution: 'Bank Mandiri', balance: 5200000 },
-  { id: 3, name: 'GoPay', type: 'E-Wallet', institution: 'Gojek', balance: 450000 },
-  { id: 4, name: 'OVO', type: 'E-Wallet', institution: 'OVO', balance: 125000 },
-];
+import { getAkun, createAkun, updateAkun, deleteAkun } from '../api/api';
 
 const fmt = (n) => 'Rp ' + Math.abs(n).toLocaleString('id-ID');
 
@@ -34,31 +28,49 @@ const AccountTypeIcon = ({ type }) => {
 };
 
 const AkunPage = () => {
-  const [accounts, setAccounts] = useState(initialAccounts);
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState({ name: '', type: 'Bank Account', institution: '', balance: '' });
 
-  const handleSave = () => {
-    if (!form.name.trim()) return;
-    if (showEdit && editTarget) {
-      setAccounts(accounts.map((a) =>
-        a.id === editTarget.id
-          ? { ...a, name: form.name, type: form.type, institution: form.institution, balance: Number(form.balance) || 0 }
-          : a
-      ));
-      setShowEdit(false);
-    } else {
-      setAccounts([
-        ...accounts,
-        { id: Date.now(), name: form.name, type: form.type, institution: form.institution, balance: Number(form.balance) || 0 },
-      ]);
-      setShowAdd(false);
+  // Fetch data dari API
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getAkun();
+      setAccounts(data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal mengambil data akun');
+    } finally {
+      setLoading(false);
     }
-    setForm({ name: '', type: 'Bank Account', institution: '', balance: '' });
-    setEditTarget(null);
+  };
+
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return;
+    try {
+      if (showEdit && editTarget) {
+        await updateAkun(editTarget.id, form);
+        setShowEdit(false);
+      } else {
+        await createAkun(form);
+        setShowAdd(false);
+      }
+      setForm({ name: '', type: 'Bank Account', institution: '', balance: '' });
+      setEditTarget(null);
+      await fetchAccounts();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal menyimpan akun');
+    }
   };
 
   const openEdit = (acc) => {
@@ -67,9 +79,15 @@ const AkunPage = () => {
     setShowEdit(true);
   };
 
-  const handleDelete = () => {
-    setAccounts(accounts.filter((a) => a.id !== deleteTarget.id));
-    setDeleteTarget(null);
+  const handleDelete = async () => {
+    try {
+      await deleteAkun(deleteTarget.id);
+      setDeleteTarget(null);
+      await fetchAccounts();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal menghapus akun');
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -81,6 +99,13 @@ const AkunPage = () => {
           + Add Account
         </button>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div style={{ padding: '1rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '0.5rem', color: '#EF4444' }}>
+          {error}
+        </div>
+      )}
 
       {/* Table card */}
       <div className="card">
@@ -95,43 +120,49 @@ const AkunPage = () => {
             <div style={{ textAlign: 'center' }}>Action</div>
           </div>
 
-          {/* Rows */}
-          {accounts.map((acc, idx) => (
-            <div className="table-data-row accounts-table-cols" key={acc.id}>
-              <div className="text-muted">{idx + 1}</div>
+          {/* Loading */}
+          {loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
+          ) : accounts.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada akun. Klik "+ Add Account" untuk menambahkan.</div>
+          ) : (
+            accounts.map((acc, idx) => (
+              <div className="table-data-row accounts-table-cols" key={acc.id}>
+                <div className="text-muted">{idx + 1}</div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div className="account-icon-circle">
-                  <AccountTypeIcon type={acc.type} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div className="account-icon-circle">
+                    <AccountTypeIcon type={acc.type} />
+                  </div>
+                  <span style={{ fontWeight: 500 }}>{acc.name}</span>
                 </div>
-                <span style={{ fontWeight: 500 }}>{acc.name}</span>
+
+                <div className="text-muted" style={{ fontSize: '0.875rem' }}>{acc.type}</div>
+
+                <div className="text-muted" style={{ fontSize: '0.875rem' }}>{acc.institution}</div>
+
+                <div style={{ textAlign: 'right', fontWeight: 700 }} className={acc.balance < 0 ? 'text-red' : ''}>
+                  {acc.balance < 0 ? '-' : ''}{fmt(acc.balance)}
+                </div>
+
+                <div className="action-btn-group" style={{ justifyContent: 'center' }}>
+                  <button className="icon-btn" title="Edit" onClick={() => openEdit(acc)}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                  <button className="icon-btn delete" title="Delete" onClick={() => setDeleteTarget(acc)}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
-
-              <div className="text-muted" style={{ fontSize: '0.875rem' }}>{acc.type}</div>
-
-              <div className="text-muted" style={{ fontSize: '0.875rem' }}>{acc.institution}</div>
-
-              <div style={{ textAlign: 'right', fontWeight: 700 }} className={acc.balance < 0 ? 'text-red' : ''}>
-                {acc.balance < 0 ? '-' : ''}{fmt(acc.balance)}
-              </div>
-
-              <div className="action-btn-group" style={{ justifyContent: 'center' }}>
-                <button className="icon-btn" title="Edit" onClick={() => openEdit(acc)}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
-                <button className="icon-btn delete" title="Delete" onClick={() => setDeleteTarget(acc)}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                    <path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
