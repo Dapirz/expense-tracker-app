@@ -920,7 +920,7 @@
    TRANSAKSI PAGE
    ============================================ */
 .transaksi-cols {
-  grid-template-columns: 1.2fr 2fr 1.2fr 1fr 0.8fr;
+  grid-template-columns: 1.2fr 2fr 1.2fr 1fr 0.8fr 0.7fr;
 }
 
 /* ============================================
@@ -1023,7 +1023,7 @@
   }
 
   .transaksi-cols {
-    grid-template-columns: 1.2fr 2fr 1.2fr 1fr 0.8fr;
+    grid-template-columns: 1.2fr 2fr 1.2fr 1fr 0.8fr 0.7fr;
   }
 
   .form-row {
@@ -1216,8 +1216,8 @@
 }
 
 .transaksi-cols {
-  grid-template-columns: 1.2fr 2fr 1.2fr 1.2fr 1fr;
-  min-width: 580px;
+  grid-template-columns: 1.2fr 2fr 1.2fr 1.2fr 1fr 0.7fr;
+  min-width: 660px;
 }
 
 .accounts-table-cols {
@@ -1260,7 +1260,7 @@
   }
 
   .transaksi-cols {
-    grid-template-columns: 2fr 1fr 0.8fr;
+    grid-template-columns: 2fr 1fr 0.8fr 0.7fr;
   }
 
   .modal-box {
