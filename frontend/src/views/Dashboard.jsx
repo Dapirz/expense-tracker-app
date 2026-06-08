@@ -107,7 +107,7 @@ const Dashboard = () => {
       setShowAddAccount(false);
       await fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menambahkan akun');
+      alert(err.response?.data?.message || 'Failed to add account');
     }
   };
 
@@ -129,7 +129,7 @@ const Dashboard = () => {
           </div>
           <div className="summary-card-trend" style={{ color: 'var(--text-muted)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Total saldo semua akun
+            Total balance across all accounts
           </div>
         </div>
 
@@ -147,7 +147,7 @@ const Dashboard = () => {
           </div>
           <div className="summary-card-trend trend-down">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-            Total pengeluaran
+            Total expenses
           </div>
         </div>
 
@@ -165,7 +165,7 @@ const Dashboard = () => {
           </div>
           <div className="summary-card-trend trend-up">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            Total pemasukan
+            Total income
           </div>
         </div>
       </section>
@@ -179,7 +179,7 @@ const Dashboard = () => {
           {loading ? (
             <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
           ) : accounts.length === 0 ? (
-            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada akun.</div>
+            <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)' }}>No accounts yet.</div>
           ) : (
             accounts.map((acc) => (
               <div className="account-item" key={acc.id}>
@@ -233,7 +233,7 @@ const Dashboard = () => {
             {loading ? (
               <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
             ) : filteredTrx.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada transaksi.</div>
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No transactions yet.</div>
             ) : (
               filteredTrx.map((trx) => {
                 const jenis = getCategoryJenis(trx.kategori_id);
@@ -267,7 +267,7 @@ const Dashboard = () => {
                 <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
               </svg>
             </span>
-            Tambah Akun Baru
+            Add New Account
           </div>
           <button className="modal-close" onClick={() => setShowAddAccount(false)}>✕</button>
         </div>
@@ -277,7 +277,7 @@ const Dashboard = () => {
             <label className="form-label">Account Name</label>
             <input
               className="form-control"
-              placeholder="Contoh: Tabungan Utama"
+              placeholder="e.g. Main Savings"
               value={newAccount.name}
               onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
             />
@@ -325,10 +325,10 @@ const Dashboard = () => {
 
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={() => setShowAddAccount(false)}>
-            Batal
+            Cancel
           </button>
           <button className="btn btn-primary" onClick={handleSaveAccount}>
-            Simpan Akun
+            Save Account
           </button>
         </div>
       </Modal>

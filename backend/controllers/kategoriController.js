@@ -42,7 +42,7 @@ const getKategoriById = async (req, res) => {
 // 3. CREATE KATEGORI (Create)
 const createKategori = async (req, res) => {
     try {
-        const { nama, jenis } = req.body;
+        const { nama, jenis, icon } = req.body;
 
         if (!nama || !jenis) {
             return res.status(400).json({ message: "Field nama dan jenis wajib diisi!" });
@@ -62,7 +62,8 @@ const createKategori = async (req, res) => {
         const newKategori = {
             id: newId,
             nama,
-            jenis: jenisLower
+            jenis: jenisLower,
+            icon: icon || '🏷️'
         };
 
         db.kategori.push(newKategori);
@@ -79,7 +80,7 @@ const createKategori = async (req, res) => {
 const updateKategori = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nama, jenis } = req.body;
+        const { nama, jenis, icon } = req.body;
 
         const db = await readDatabase();
 
@@ -92,6 +93,7 @@ const updateKategori = async (req, res) => {
 
         const newNama = nama !== undefined ? nama : oldKategori.nama;
         let newJenis = jenis !== undefined ? jenis.toLowerCase() : oldKategori.jenis;
+        const newIcon = icon !== undefined ? icon : (oldKategori.icon || '🏷️');
 
         if (jenis !== undefined && newJenis !== 'pemasukan' && newJenis !== 'pengeluaran') {
             return res.status(400).json({ message: "Jenis kategori harus 'pemasukan' atau 'pengeluaran'!" });
@@ -100,7 +102,8 @@ const updateKategori = async (req, res) => {
         db.kategori[kategoriIndex] = {
             id: Number(id),
             nama: newNama,
-            jenis: newJenis
+            jenis: newJenis,
+            icon: newIcon
         };
 
         await writeDatabase(db);

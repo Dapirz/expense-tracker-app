@@ -1,3 +1,10 @@
-node_modules
+# Node modules
+node_modules/
+
+# Environment variables
 .env
-data/database.json
+.env.*
+
+# Logs
+logs/
+*.log

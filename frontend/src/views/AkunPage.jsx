@@ -45,7 +45,7 @@ const AkunPage = () => {
       const data = await getAkun();
       setAccounts(data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Gagal mengambil data akun');
+      setError(err.response?.data?.message || 'Failed to load accounts');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ const AkunPage = () => {
       setEditTarget(null);
       await fetchAccounts();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menyimpan akun');
+      alert(err.response?.data?.message || 'Failed to save account');
     }
   };
 
@@ -85,7 +85,7 @@ const AkunPage = () => {
       setDeleteTarget(null);
       await fetchAccounts();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menghapus akun');
+      alert(err.response?.data?.message || 'Failed to delete account');
       setDeleteTarget(null);
     }
   };
@@ -124,7 +124,7 @@ const AkunPage = () => {
           {loading ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
           ) : accounts.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Belum ada akun. Klik "+ Add Account" untuk menambahkan.</div>
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No accounts yet. Click "+ Add Account" to get started.</div>
           ) : (
             accounts.map((acc, idx) => (
               <div className="table-data-row accounts-table-cols" key={acc.id}>
@@ -175,7 +175,7 @@ const AkunPage = () => {
                 <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
               </svg>
             </span>
-            {showEdit ? 'Edit Akun' : 'Tambah Akun Baru'}
+            {showEdit ? 'Edit Account' : 'Add New Account'}
           </div>
           <button className="modal-close" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); }}>✕</button>
         </div>
@@ -185,7 +185,7 @@ const AkunPage = () => {
             <label className="form-label">Account Name</label>
             <input
               className="form-control"
-              placeholder="Contoh: Tabungan Utama"
+              placeholder="e.g. Main Savings"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
@@ -229,10 +229,10 @@ const AkunPage = () => {
 
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); }}>
-            Batal
+            Cancel
           </button>
           <button className="btn btn-primary" onClick={handleSave}>
-            {showEdit ? 'Simpan Perubahan' : 'Simpan Akun'}
+            {showEdit ? 'Save Changes' : 'Save Account'}
           </button>
         </div>
       </Modal>

@@ -24,7 +24,7 @@ const TeamProfile = () => {
 
   return (
     <main className="profiles-container">
-      <h1 className="profiles-title">Tim Pengembang</h1>
+      <h1 className="profiles-title">Development Team</h1>
       
       <div className="profiles-grid">
         {members.map((member) => (

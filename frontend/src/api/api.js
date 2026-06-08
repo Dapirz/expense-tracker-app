@@ -56,11 +56,13 @@ const mapKategoriFromBackend = (kat) => ({
   id: kat.id,
   name: kat.nama,
   jenis: kat.jenis,
+  icon: kat.icon || '🏷️',
 });
 
 const mapKategoriToBackend = (kat) => ({
   nama: kat.name,
   jenis: kat.jenis,
+  icon: kat.icon || '🏷️',
 });
 
 export const getKategori = async () => {

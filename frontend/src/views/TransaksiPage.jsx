@@ -60,7 +60,7 @@ const TransaksiPage = () => {
       setCategories(katData);
       setAccounts(akunData);
     } catch (err) {
-      setError(err.response?.data?.message || 'Gagal mengambil data');
+      setError(err.response?.data?.message || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ const TransaksiPage = () => {
 
   const handleSave = async () => {
     if (!form.jumlah || !form.tanggal || !form.akun_id || !form.kategori_id) {
-      alert('Field jumlah, tanggal, akun, dan kategori wajib diisi!');
+      alert('Amount, date, account, and category are required!');
       return;
     }
     try {
@@ -126,7 +126,7 @@ const TransaksiPage = () => {
       setPage(1);
       await fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menyimpan transaksi');
+      alert(err.response?.data?.message || 'Failed to save transaction');
     }
   };
 
@@ -148,7 +148,7 @@ const TransaksiPage = () => {
       setDeleteTarget(null);
       await fetchAll();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menghapus transaksi');
+      alert(err.response?.data?.message || 'Failed to delete transaction');
       setDeleteTarget(null);
     }
   };
@@ -193,7 +193,7 @@ const TransaksiPage = () => {
           <div className="summary-card-value text-green">{fmt(totalIncome)}</div>
           <div className="summary-card-trend trend-up">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            Pemasukan
+            Income
           </div>
         </div>
 
@@ -202,7 +202,7 @@ const TransaksiPage = () => {
           <div className="summary-card-value text-red">{fmt(totalExpense)}</div>
           <div className="summary-card-trend trend-down">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-            Pengeluaran
+            Expenses
           </div>
         </div>
 
@@ -211,7 +211,7 @@ const TransaksiPage = () => {
           <div className="summary-card-value" style={{ color: '#60A5FA' }}>{fmt(balance)}</div>
           <div className="summary-card-trend" style={{ color: 'var(--text-muted)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Selisih
+            Balance
           </div>
         </div>
       </section>
@@ -250,7 +250,7 @@ const TransaksiPage = () => {
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
           ) : paginated.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              {transactions.length === 0 ? 'Belum ada transaksi.' : 'No transactions found.'}
+              {transactions.length === 0 ? 'No transactions yet.' : 'No transactions found.'}
             </div>
           ) : (
             paginated.map((trx) => {

@@ -1,0 +1,104 @@
+{
+  "akun": [
+    {
+      "id": 1,
+      "nama": "Bank Mandiri",
+      "tipe": "Bank Account",
+      "institusi": "Mandiri",
+      "saldo": 12415000
+    },
+    {
+      "id": 2,
+      "nama": "GoPay",
+      "tipe": "E-Wallet",
+      "institusi": "Gojek",
+      "saldo": 350000
+    },
+    {
+      "id": 3,
+      "nama": "test akun",
+      "tipe": "Savings",
+      "institusi": "kartu hitam",
+      "saldo": 100000000
+    }
+  ],
+  "kategori": [
+    {
+      "id": 1,
+      "nama": "Makanan",
+      "jenis": "pengeluaran",
+      "icon": "🍔"
+    },
+    {
+      "id": 2,
+      "nama": "Transportasi",
+      "jenis": "pengeluaran",
+      "icon": "🚗"
+    },
+    {
+      "id": 3,
+      "nama": "Gaji",
+      "jenis": "pemasukan"
+    },
+    {
+      "id": 4,
+      "nama": "Hiburan",
+      "jenis": "pengeluaran",
+      "icon": "🎬"
+    },
+    {
+      "id": 5,
+      "nama": "test kategori",
+      "jenis": "pemasukan",
+      "icon": "🗿"
+    },
+    {
+      "id": 6,
+      "nama": "test lagi",
+      "jenis": "pengeluaran",
+      "icon": "😭"
+    }
+  ],
+  "transaksi": [
+    {
+      "id": 1,
+      "akun_id": 1,
+      "kategori_id": 3,
+      "jumlah": 12500000,
+      "tanggal": "2026-06-01",
+      "catatan": "Gaji Bulan Juni"
+    },
+    {
+      "id": 2,
+      "akun_id": 1,
+      "kategori_id": 1,
+      "jumlah": 35000,
+      "tanggal": "2026-06-02",
+      "catatan": "Beli Nasi Padang"
+    },
+    {
+      "id": 3,
+      "akun_id": 1,
+      "kategori_id": 2,
+      "jumlah": 50000,
+      "tanggal": "2026-06-03",
+      "catatan": "Isi bensin motor"
+    },
+    {
+      "id": 4,
+      "akun_id": 2,
+      "kategori_id": 1,
+      "jumlah": 25000,
+      "tanggal": "2026-06-04",
+      "catatan": "Beli kopi Starbucks"
+    },
+    {
+      "id": 5,
+      "akun_id": 2,
+      "kategori_id": 4,
+      "jumlah": 75000,
+      "tanggal": "2026-06-05",
+      "catatan": "Nonton bioskop"
+    }
+  ]
+}

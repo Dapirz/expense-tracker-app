@@ -2,11 +2,6 @@ import { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
 import { getKategori, createKategori, updateKategori, deleteKategori } from '../api/api';
 
-const ICON_MAP = {
-  'pengeluaran': '💸',
-  'pemasukan': '💰',
-};
-
 const COLOR_MAP = {
   'pengeluaran': { color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
   'pemasukan': { color: '#4ADE80', bg: 'rgba(74,222,128,0.15)' },
@@ -20,7 +15,7 @@ const KategoriPage = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
-  const [form, setForm] = useState({ name: '', jenis: 'pengeluaran' });
+  const [form, setForm] = useState({ name: '', jenis: 'pengeluaran', icon: '🏷️' });
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const fetchCategories = async () => {
@@ -30,7 +25,7 @@ const KategoriPage = () => {
       const data = await getKategori();
       setCategories(data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Gagal mengambil data kategori');
+      setError(err.response?.data?.message || 'Failed to load categories');
     } finally {
       setLoading(false);
     }
@@ -54,17 +49,17 @@ const KategoriPage = () => {
         await createKategori(form);
         setShowAdd(false);
       }
-      setForm({ name: '', jenis: 'pengeluaran' });
+      setForm({ name: '', jenis: 'pengeluaran', icon: '🏷️' });
       setEditTarget(null);
       await fetchCategories();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menyimpan kategori');
+      alert(err.response?.data?.message || 'Failed to save category');
     }
   };
 
   const openEdit = (cat) => {
     setEditTarget(cat);
-    setForm({ name: cat.name, jenis: cat.jenis });
+    setForm({ name: cat.name, jenis: cat.jenis, icon: cat.icon || '🏷️' });
     setShowEdit(true);
   };
 
@@ -74,7 +69,7 @@ const KategoriPage = () => {
       setDeleteTarget(null);
       await fetchCategories();
     } catch (err) {
-      alert(err.response?.data?.message || 'Gagal menghapus kategori');
+      alert(err.response?.data?.message || 'Failed to delete category');
       setDeleteTarget(null);
     }
   };
@@ -84,8 +79,8 @@ const KategoriPage = () => {
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Kelola Kategori</h1>
-          <p className="page-subtitle">Atur pengeluaran dan pemasukan Anda dengan kategori yang rapi.</p>
+          <h1 className="page-title">Manage Categories</h1>
+          <p className="page-subtitle">Organize your expenses and income with tidy categories.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="search-bar">
@@ -94,13 +89,13 @@ const KategoriPage = () => {
             </svg>
             <input
               type="text"
-              placeholder="Cari kategori..."
+              placeholder="Search categories..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button className="btn btn-blue" id="add-category-btn" onClick={() => { setForm({ name: '', jenis: 'pengeluaran' }); setShowAdd(true); }}>
-            + Tambah Kategori
+          <button className="btn btn-blue" id="add-category-btn" onClick={() => { setForm({ name: '', jenis: 'pengeluaran', icon: '🏷️' }); setShowAdd(true); }}>
+            + Add Category
           </button>
         </div>
       </div>
@@ -120,26 +115,25 @@ const KategoriPage = () => {
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ gridColumn: '1/-1', padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            {categories.length === 0 ? 'Belum ada kategori. Klik "+ Tambah Kategori" untuk menambahkan.' : 'Tidak ada kategori ditemukan.'}
+            {categories.length === 0 ? 'No categories yet. Click "+ Add Category" to get started.' : 'No categories found.'}
           </div>
         ) : (
           filtered.map((cat) => {
             const colors = COLOR_MAP[cat.jenis] || COLOR_MAP['pengeluaran'];
-            const icon = ICON_MAP[cat.jenis] || '🏷️';
             return (
               <div className="category-card" key={cat.id}>
                 <div className="category-card-header">
                   <div className="category-icon-box" style={{ background: colors.bg }}>
-                    <span style={{ fontSize: '1.3rem' }}>{icon}</span>
+                    <span style={{ fontSize: '1.3rem' }}>{cat.icon || '🏷️'}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button className="cat-menu-btn" onClick={() => openEdit(cat)} title="Edit kategori">
+                    <button className="cat-menu-btn" onClick={() => openEdit(cat)} title="Edit category">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
-                    <button className="cat-menu-btn" onClick={() => setDeleteTarget(cat)} title="Hapus kategori">
+                    <button className="cat-menu-btn" onClick={() => setDeleteTarget(cat)} title="Delete category">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="3 6 5 6 21 6"/>
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -151,7 +145,7 @@ const KategoriPage = () => {
                 <div className="category-name">{cat.name}</div>
                 <div className="category-count">
                   <span className={`badge ${cat.jenis === 'pemasukan' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '0.7rem' }}>
-                    {cat.jenis === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran'}
+                    {cat.jenis === 'pemasukan' ? 'Income' : 'Expense'}
                   </span>
                 </div>
               </div>
@@ -169,34 +163,50 @@ const KategoriPage = () => {
                 <path d="M4 20h4l10.5-10.5a1.5 1.5 0 0 0-4-4L4 16v4z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/>
               </svg>
             </span>
-            {showEdit ? 'Edit Kategori' : 'Tambah Kategori'}
+            {showEdit ? 'Edit Category' : 'Add Category'}
           </div>
           <button className="modal-close" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); }}>✕</button>
         </div>
 
         <div className="modal-body">
           <div className="form-group">
-            <label className="form-label">Nama Kategori</label>
+            <label className="form-label">Category Name</label>
             <input
               className="form-control"
-              placeholder="Contoh: Makanan"
+              placeholder="e.g. Food, Transport, Salary"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
           </div>
-          <div className="form-group">
-            <label className="form-label">Jenis</label>
-            <select className="form-control" value={form.jenis} onChange={(e) => setForm({ ...form, jenis: e.target.value })}>
-              <option value="pengeluaran">Pengeluaran</option>
-              <option value="pemasukan">Pemasukan</option>
-            </select>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Type</label>
+              <select className="form-control" value={form.jenis} onChange={(e) => setForm({ ...form, jenis: e.target.value })}>
+                <option value="pengeluaran">Expense</option>
+                <option value="pemasukan">Income</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Icon (Emoji)</label>
+              <input
+                className="form-control"
+                placeholder="🏷️"
+                value={form.icon}
+                onChange={(e) => {
+                  const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+                  const segments = [...segmenter.segment(e.target.value)];
+                  setForm({ ...form, icon: segments.length > 0 ? segments[segments.length - 1].segment : '' });
+                }}
+                style={{ fontSize: '1.25rem', textAlign: 'center' }}
+              />
+            </div>
           </div>
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); }}>Batal</button>
+          <button className="btn btn-secondary" onClick={() => { setShowAdd(false); setShowEdit(false); setEditTarget(null); }}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSave}>
-            {showEdit ? 'Simpan Perubahan' : 'Simpan Kategori'}
+            {showEdit ? 'Save Changes' : 'Save Category'}
           </button>
         </div>
       </Modal>
@@ -210,18 +220,18 @@ const KategoriPage = () => {
               <line x1="15" y1="15" x2="19" y2="19"/>
             </svg>
           </div>
-          <h3 className="delete-modal-title">Hapus Kategori?</h3>
+          <h3 className="delete-modal-title">Delete Category?</h3>
           <p className="delete-modal-desc">
-            Apakah Anda yakin ingin menghapus kategori <strong>"{deleteTarget?.name}"</strong>? Kategori yang masih digunakan oleh transaksi tidak dapat dihapus.
+            Are you sure you want to delete <strong>"{deleteTarget?.name}"</strong>? Categories that are still used by transactions cannot be deleted.
           </p>
           <button className="btn btn-danger" onClick={handleDelete}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10"/>
               <circle cx="17" cy="17" r="4"/><line x1="15" y1="15" x2="19" y2="19"/>
             </svg>
-            Hapus Kategori
+            Delete Category
           </button>
-          <button className="btn-text-cancel" onClick={() => setDeleteTarget(null)}>Batal</button>
+          <button className="btn-text-cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
         </div>
       </Modal>
     </main>
