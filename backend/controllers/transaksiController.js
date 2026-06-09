@@ -1,7 +1,9 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-const DATABASE_PATH = path.join(__dirname, '..', 'data', 'database.json');
+const DATABASE_PATH = process.env.DATABASE_PATH
+    ? path.resolve(process.env.DATABASE_PATH)
+    : path.join(__dirname, '..', 'data', 'database.json');
 
 const readDatabase = async () => {
     const data = await fs.readFile(DATABASE_PATH, 'utf-8');
